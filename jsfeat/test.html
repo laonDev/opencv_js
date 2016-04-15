@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        img {
+            border:2px dashed;
+        }
+        canvas {
+            border:1px dashed;
+        }
+    </style>
+    <script type="text/javascript" src="build/jsfeat-min.js"></script>
+</head>
+<body>
+    <img id="image" src="../img/lena.jpg" >
+    <canvas id="canvas" width="640" height="480">not support canvas </canvas>
+    <script>
+//        console.log("start");
+        var canvas = document.getElementById('canvas');
+        var context = canvas.getContext('2d');
+
+        var img = document.getElementById('image');
+//        console.log(img);
+        context.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        //gray scale
+        var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        var data_buffer = new jsfeat.data_t(canvas.width * canvas.height);
+        var grayImg = new jsfeat.matrix_t(canvas.width, canvas.height, jsfeat.U8_t | jsfeat.C1_t), data_buffer;
+        var code = jsfeat.COLOR_RGBA2GRAY;
+        jsfeat.imgproc.grayscale(imageData.data, canvas.width, canvas.height, grayImg);
+
+        // render result back to canvas
+        var data_u32 = new Uint32Array(imageData.data.buffer);
+        var alpha = (0xff << 24);
+        var i = grayImg.cols*grayImg.rows, pix = 0;
+        while(--i >= 0) {
+            pix = grayImg.data[i];
+            data_u32[i] = alpha | (pix << 16) | (pix << 8) | pix;
+
+        }
+
+        context.putImageData(imageData, 0, 0);
+
+//        console.log(grayImg);
+    </script>
+</body>
+</html>
