@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>사진 자동 회전 Demo</title>
+    <style>
+        canvas {
+            border:1px dashed;
+        }
+    </style>
+    <script type="text/javascript" src="../build/jsfeat.js"></script>
+</head>
+<body>
+<script type="text/javascript" src="main.js"></script>
+<div class="topMenu">
+
+
+    <input type="file" id='imageLoader' name="imageLoader" >
+    <form oninput="x.value=threshold.value">
+        <span>Threshold:</span>10
+        <input type="range" name="points" id="threshold" min="10" max="150" value="90">150
+        <output name="x" for="threshold">90</output>
+    </form>
+    <button id="processingImage">Processing</button>
+</div>
+<div>
+    <canvas id="canvas" width="600" height="480">
+        Can not support canvas!
+    </canvas>
+
+</div>
+
+</body>
+</html>
