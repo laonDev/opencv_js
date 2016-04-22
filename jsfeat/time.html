@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+</head>
+<body>
+    <p id="demo"></p>
+    <script>
+        var currentTime = Date.now();
+        var deltaTime = Date.now() - currentTime;
+        console.log(currentTime, deltaTime);
+        var str = "";
+        for(var i = 0; i < 1000; ++i)
+        {
+            for(var j = 0; j < 100; ++j)
+            {
+                str += j;
+            }
+        }
+        deltaTime = Date.now() - currentTime;
+        console.log("d",deltaTime);
+    </script>
+</body>
+</html>

@@ -16,100 +16,134 @@
 <body>
     <img id="image" src="../img/building.jpg" >
     <canvas id="canvas" width="640" height="480">not support canvas </canvas>
+    <p id="output"></p>
     <script>
 
 
 //        console.log("start");
-        var canvas = document.getElementById('canvas');
-        var context = canvas.getContext('2d');
 
 
-        function Point(){
-            this.x = 0;
-            this.y = 0;
-        };
-        var img = document.getElementById('image');
+            var canvas = document.getElementById('canvas');
+            var context = canvas.getContext('2d');
+            var currentTime = Date.now();
+            var deltaTime;
+            var show_progress = false;
+            function Point(){
+                this.x = 0;
+                this.y = 0;
+            };
+            var img = document.getElementById('image');
 //        console.log(img);
-        var width = img.width;
-        var height = img.height;
-        context.drawImage(img, 0, 0, width, height);
+            var width = img.width;
+            var height = img.height;
+            canvas.width = width;
+            canvas.height = height;
+            context.drawImage(img, 0, 0, width, height);
 
-        //gray scale
-        var imageData = context.getImageData(0, 0, width, height);
-        var data_buffer = new jsfeat.data_t(width * height);
-        var grayImg = new jsfeat.matrix_t(width, height, jsfeat.U8_t | jsfeat.C1_t), data_buffer;
+            function getProcessTime(target)
+            {
+                deltaTime = Date.now() - currentTime;
+                currentTime = Date.now();
+                document.getElementById("output").innerHTML +=target + ": " + deltaTime + "ms" +"<br>";
+            }
+
+            //gray scale
+
+            var imageData = context.getImageData(0, 0, width, height);
+            var data_buffer = new jsfeat.data_t(width * height);
+            var grayImg = new jsfeat.matrix_t(width, height, jsfeat.U8_t | jsfeat.C1_t), data_buffer;
 //        var code = jsfeat.COLOR_RGBA2GRAY;
-        jsfeat.imgproc.grayscale(imageData.data, width, height, grayImg);
+            jsfeat.imgproc.grayscale(imageData.data, width, height, grayImg);
+            getProcessTime("gray");
 
 
-        // render result back to canvas
-//        var data_u32 = new Uint32Array(imageData.data.buffer);
+            //canny
+            var blurLevel = 2;
+            var lowThreshhold = 40;
+            var highThreshhold = 100;
+            //Gaussian Blur to reduce noise
+            var r = blurLevel | 0;
+            var kernel_size = (r + 1) << 1;
+            jsfeat.imgproc.gaussian_blur(grayImg, grayImg, kernel_size, 0);
+
+            //Reduce image to edges
+            jsfeat.imgproc.canny(grayImg, grayImg, lowThreshhold | 0, highThreshhold | 0);
+            getProcessTime("canny");
+            //Render the image data back to canvas
+//        var data_u32_buffer = new Uint32Array(imageData.data.buffer);
+//        // init the array by size
+//        console.log(data_u32_buffer.length);
+//        var data_u32 = new Uint32Array(width*height );
+//
+//        // fill the array "manually"
+//        var data=imageData.data;
+//        for(var i=0;i<data.length;i++) {
+//            data_u32[i] = data[i];
+//        }
+//        console.log(data_u32.length);
+//
 //        var alpha = (0xff << 24);
-//        var i = grayImg.cols*grayImg.rows, pix = 0;
-//        while(--i >= 0) {
-//            pix = grayImg.data[i];
-//            data_u32[i] = alpha | (pix << 16) | (pix << 8) | pix;
+//        var j = grayImg.cols * grayImg.rows,
+//                pix = 0;
+//        while (--j >= 0) {
+//            pix = grayImg.data[j];
+//            data_u32[j] = alpha | (pix << 16) | (pix << 8) | pix;
 //
 //        }
-        //canny
-        var blurLevel = 2;
-        var lowThreshhold = 40;
-        var highThreshhold = 100;
-        //Gaussian Blur to reduce noise
-        var r = blurLevel | 0;
-        var kernel_size = (r + 1) << 1;
-        jsfeat.imgproc.gaussian_blur(grayImg, grayImg, kernel_size, 0);
+            if(show_progress)
+            {
+                // render result back to canvas
+                var data_u32 = new Uint32Array(imageData.data.buffer);
+                var alpha = (0xff << 24);
+                var i = grayImg.cols*grayImg.rows, pix = 0;
+                while(--i >= 0) {
+                    pix = grayImg.data[i];
+                    data_u32[i] = alpha | (pix << 16) | (pix << 8) | pix;
 
-        //Reduce image to edges
-        jsfeat.imgproc.canny(grayImg, grayImg, lowThreshhold | 0, highThreshhold | 0);
+                }
+                getProcessTime("render");
+            }
 
-        //Render the image data back to canvas
-        var data_u32 = new Uint32Array(imageData.data.buffer);
-        var alpha = (0xff << 24);
-        var i = grayImg.cols * grayImg.rows,
-                pix = 0;
-        while (--i >= 0) {
-            pix = grayImg.data[i];
-            data_u32[i] = alpha | (pix << 16) | (pix << 8) | pix;
-
-        }
-
-        //hough transform
-        var lines = jsfeat.imgproc.hough_transform(grayImg, 1, Math.PI / 180, 90);
-        console.log(lines);
-        //Put the edited image on the canvas
-        context.putImageData(imageData, 0, 0);
-        var angle = 0;
-        var lineCount;
-        var color = '#ff0000';
-        var angle = 0;
+            //hough transform
+            var lines = jsfeat.imgproc.hough_transform(grayImg, 1, Math.PI / 180, 90);
+            console.log(lines);
+            //Put the edited image on the canvas
+            context.putImageData(imageData, 0, 0);
+            var angle = 0;
+            var lineCount;
+            var color = '#ff0000';
+            var angle = 0;
 //        offsetX = width/2;
 //        offsetY = height/2;
-        context.strokeStyle = color;
-        context.lineWidth = 0.5;
+            context.strokeStyle = color;
+            context.lineWidth = 0.5;
 
-        for(var i = 0; i < lines.length; i += 1)
-        {
-            var rho = lines[i][0];
-            var theta = lines[i][1];
-            var a = Math.cos(theta), b = Math.sin(theta);
-            var x0 = a * rho, y0 = b*rho;
-            var pt1 = new Point();
-            var pt2 = new Point();
-            pt1.x = Math.round(x0 + 1000 * (-b));
-            pt1.y = Math.round(y0 + 1000 * (a));
-            pt2.x = Math.round(x0 - 1000 * (-b));
-            pt2.y = Math.round(y0 - 1000 * (a));
-            angle += Math.atan2(pt2.y - pt1.y, pt2.x - pt1.x) * 180/ Math.PI;
-            context.save();
-            context.beginPath();
-            context.moveTo(pt1.x, pt1.y);
-            context.lineTo(pt2.x, pt2.y);
-            context.stroke();
-            context.restore();
+            for(var i = 0; i < lines.length; i += 1)
+            {
+                var rho = lines[i][0];
+                var theta = lines[i][1];
+                var a = Math.cos(theta), b = Math.sin(theta);
+                var x0 = a * rho, y0 = b*rho;
+                var pt1 = new Point();
+                var pt2 = new Point();
+                pt1.x = Math.round(x0 + 1000 * (-b));
+                pt1.y = Math.round(y0 + 1000 * (a));
+                pt2.x = Math.round(x0 - 1000 * (-b));
+                pt2.y = Math.round(y0 - 1000 * (a));
+                angle += Math.atan2(pt2.y - pt1.y, pt2.x - pt1.x) * 180/ Math.PI;
+                context.save();
+                context.beginPath();
+                context.moveTo(pt1.x, pt1.y);
+                context.lineTo(pt2.x, pt2.y);
+                context.stroke();
+                context.restore();
 
-        }
-        console.log("target angle: ", angle / lines.length);
+            }
+            getProcessTime("hough transform");
+            console.log("target angle: ", angle / lines.length);
+            document.getElementById("output").innerHTML += "target angle: " + (angle / lines.length);
+
+
     </script>
 </body>
 </html>
