@@ -2,11 +2,13 @@
  * Created by NAVER on 2016-04-20.
  */
 var canvas, context;
+var resultCanvas, resultCtx;
 var imgLoader, originImg;
 var currentTime, deltaTime;
 var showProgress;
 var width, height;
 var processingBtn;
+var progressCheckbox, resetBtn;
 
 function Point(){
     this.x = 0;
@@ -17,12 +19,14 @@ function getProcessTime(target)
 {
     deltaTime = Date.now() - currentTime;
     currentTime = Date.now();
-    document.getElementById("output").innerHTML +=target + ": " + deltaTime + "ms" +"<br>";
+    document.getElementById("output").innerHTML +=target + ": " + deltaTime + "ms" +"<br/>";
 }
+
 function clearLog()
 {
     document.getElementById("output").innerHTML = "";
 }
+
 function houghTransform( img, rho_res, theta_res, threshold ) {
     var image = img.data;
 
@@ -100,19 +104,25 @@ function houghTransform( img, rho_res, theta_res, threshold ) {
 function init()
 {
     console.log("hello");
-    canvas = document.getElementById('canvas');
+    canvas = document.getElementById('mainCanvas');
     context = canvas.getContext('2d');
 
     imgLoader = document.getElementById('imageLoader');
     imgLoader.addEventListener('change', uploadImage, false);
 
-    var progressCheckbox = document.getElementById('showProgress');
+    progressCheckbox = document.getElementById('showProgress');
     showProgress = progressCheckbox.checked;
     progressCheckbox.addEventListener('click', clickProgressCheckbox);
 
     processingBtn = document.getElementById('processingImage');
     processingBtn.addEventListener('click', clickProcessing);
     processingBtn.disabled = true;
+
+    resetBtn = document.getElementById('reset');
+    resetBtn.addEventListener('click', clickReset);
+
+
+
 
 }
 
@@ -128,6 +138,7 @@ function uploadImage(e)
             context.drawImage(img, 0, 0);
 
             processingBtn.disabled = false;
+            document.getElementById("output").innerHTML += img.width + " X " + img.height +"<br>";
         };
         img.src = event.target.result;
         originImg = img;
@@ -139,6 +150,17 @@ function clickProgressCheckbox(e)
 {
     console.log(e.target.checked);
     showProgress = e.target.checked;
+}
+
+function clickReset(e)
+{
+    clearLog();
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(originImg, 0, 0);
+
+    resultCtx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
+    document.body.removeChild(resultCanvas);
+
 }
 
 var width,height;
@@ -182,10 +204,9 @@ function clickProcessing(e)
     }
     //hough transform
 
-    var threshold = document.getElementById('threshold').value;
+    var threshold = document.getElementById('stepper').value;
     console.log(threshold);
     var lines = houghTransform(grayImg, 1, Math.PI / 180, threshold);
-
 
     var angle = 0;
     var lineCount = lines.length;
@@ -205,9 +226,11 @@ function clickProcessing(e)
         angle += Math.atan2(pt2.y - pt1.y, pt2.x - pt1.x) * 180/ Math.PI;
 
     }
+    var targetAngle = angle / lineCount;
+    targetAngle = targetAngle < 0 ? -targetAngle : targetAngle;
     getProcessTime("hough transform");
     console.log("target angle: ", angle / lineCount);
-    document.getElementById("output").innerHTML += "target angle: " + (angle / lineCount) + "<br>";
+    document.getElementById("output").innerHTML += "target angle: " + targetAngle + "<br/>";
     //if show Progress is true, draw result image
     if(showProgress)
     {
@@ -221,10 +244,15 @@ function clickProcessing(e)
 
         }
         // Put the edited image on the canvas
-        context.putImageData(imageData, 0, 0);
+        resultCanvas = document.createElement("canvas");
+        resultCtx = resultCanvas.getContext('2d');
+        resultCanvas.width = canvas.width;
+        resultCanvas.height = canvas.height;
+        resultCtx.putImageData(imageData, 0, 0);
+
         var color = '#ff0000';
-        context.strokeStyle = color;
-        context.lineWidth = 0.5;
+        resultCtx.strokeStyle = color;
+        resultCtx.lineWidth = 0.5;
 
         for(var i = 0; i < lineCount; i += 1)
         {
@@ -239,17 +267,33 @@ function clickProcessing(e)
             pt2.x = Math.round(x0 - 1000 * (-b));
             pt2.y = Math.round(y0 - 1000 * (a));
 
-            context.save();
-            context.beginPath();
-            context.moveTo(pt1.x, pt1.y);
-            context.lineTo(pt2.x, pt2.y);
-            context.stroke();
-            context.restore();
+            resultCtx.save();
+            resultCtx.beginPath();
+            resultCtx.moveTo(pt1.x, pt1.y);
+            resultCtx.lineTo(pt2.x, pt2.y);
+            resultCtx.stroke();
+            resultCtx.restore();
 
         }
-
+        document.body.appendChild(resultCanvas);
         getProcessTime("render");
     }
+    // Create a temp canvas to store our data (because we need to delete the other box.
+    var tempCanvas = document.createElement("canvas"),
+        tempCtx = tempCanvas.getContext("2d");
+
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    tempCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height);
+
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.save();
+    context.translate((canvas.width / 2), (canvas.height / 2));
+    context.rotate((targetAngle) * Math.PI / 180);
+    context.translate(-(canvas.width / 2), -(canvas.height / 2));
+    context.drawImage(tempCanvas, 0, 0);
+    context.restore();
+
 }
 
 

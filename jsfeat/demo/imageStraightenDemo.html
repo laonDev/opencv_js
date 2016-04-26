@@ -16,22 +16,22 @@
 
 
     <input type="file" id='imageLoader' name="imageLoader" >
-    <form oninput="x.value=threshold.value">
-        <span>Threshold:</span>10
-        <input type="range" name="points" id="threshold" min="10" max="150" value="90">150
-        <output name="x" for="threshold">90</output>
-    </form>
+    <br/>
     <form>
         <span>show Progress: </span>
-        <input type="checkbox" id="showProgress">
+        <input type="checkbox" id="showProgress" checked="true">
     </form>
-
+    Threshold:
+    <input type="number" id="stepper" name="stepper1" min="0" max="150" step="5" value="100" />
+    <br/>
     <button id="processingImage">Processing</button>
+    <button id="reset">Reset</button>
 </div>
 <div>
-    <canvas id="canvas" width="600" height="480">
+    <canvas id="mainCanvas" width="600" height="480">
         Can not support canvas!
     </canvas>
+    <br/>
     <p id="output"></p>
 </div>
 
