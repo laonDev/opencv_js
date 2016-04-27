@@ -165,7 +165,6 @@ function clickReset(e)
 
 var width,height;
 var imageData;
-var data_buffer;
 var grayImg;
 
 function clickProcessing(e)
@@ -203,13 +202,11 @@ function clickProcessing(e)
 
     }
     //hough transform
-
     var threshold = document.getElementById('stepper').value;
-    console.log(threshold);
     var lines = houghTransform(grayImg, 1, Math.PI / 180, threshold);
 
     var angle = 0;
-    var lineCount = lines.length;
+    var lineCount = 0;
 
     for(var i = 0; i < lines.length; i += 1)
     {
@@ -219,17 +216,24 @@ function clickProcessing(e)
         var x0 = a * rho, y0 = b*rho;
         var pt1 = new Point();
         var pt2 = new Point();
+
         pt1.x = Math.round(x0 + 1000 * (-b));
         pt1.y = Math.round(y0 + 1000 * (a));
         pt2.x = Math.round(x0 - 1000 * (-b));
         pt2.y = Math.round(y0 - 1000 * (a));
-        angle += Math.atan2(pt2.y - pt1.y, pt2.x - pt1.x) * 180/ Math.PI;
+        var lineAngle = Math.atan2(pt2.y - pt1.y, pt2.x - pt1.x) * 180/ Math.PI;
+        if(lineAngle < 30 && lineAngle > -30)
+        {
+            // console.log(Math.atan2(pt2.y - pt1.y, pt2.x - pt1.x) * 180/ Math.PI);
+            angle += Math.atan2(pt2.y - pt1.y, pt2.x - pt1.x) * 180/ Math.PI;
+            lineCount += 1;
+        }
+
 
     }
-    var targetAngle = angle / lineCount;
-    targetAngle = targetAngle < 0 ? -targetAngle : targetAngle;
+    var targetAngle = angle / lineCount *-1;
     getProcessTime("hough transform");
-    console.log("target angle: ", angle / lineCount);
+    console.log("target angle: ", angle, lineCount, targetAngle);
     document.getElementById("output").innerHTML += "target angle: " + targetAngle + "<br/>";
     //if show Progress is true, draw result image
     if(showProgress)
@@ -254,7 +258,7 @@ function clickProcessing(e)
         resultCtx.strokeStyle = color;
         resultCtx.lineWidth = 0.5;
 
-        for(var i = 0; i < lineCount; i += 1)
+        for(var i = 0; i < lines.length; i += 1)
         {
             var rho = lines[i][0];
             var theta = lines[i][1];
