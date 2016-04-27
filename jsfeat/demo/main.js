@@ -192,15 +192,15 @@ function clickProcessing(e)
     //Reduce image to edges
     jsfeat.imgproc.canny(grayImg, grayImg, lowThreshhold | 0, highThreshhold | 0);
     getProcessTime("canny");
-
-    var data_u32 = new Uint32Array(imageData.data.buffer);
-    var alpha = (0xff << 24);
-    var i = grayImg.cols*grayImg.rows, pix = 0;
-    while(--i >= 0) {
-        pix = grayImg.data[i];
-        data_u32[i] = alpha | (pix << 16) | (pix << 8) | pix;
-
-    }
+    //
+    // var data_u32 = new Uint32Array(imageData.data.buffer);
+    // var alpha = (0xff << 24);
+    // var i = grayImg.cols*grayImg.rows, pix = 0;
+    // while(--i >= 0) {
+    //     pix = grayImg.data[i];
+    //     data_u32[i] = alpha | (pix << 16) | (pix << 8) | pix;
+    //
+    // }
     //hough transform
     var threshold = document.getElementById('stepper').value;
     var lines = houghTransform(grayImg, 1, Math.PI / 180, threshold);
@@ -238,6 +238,7 @@ function clickProcessing(e)
     //if show Progress is true, draw result image
     if(showProgress)
     {
+
         // render result back to canvas
         var data_u32 = new Uint32Array(imageData.data.buffer);
         var alpha = (0xff << 24);
